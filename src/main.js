@@ -1,43 +1,51 @@
 
-const $ = (selector) => document.querySelector(selector);
+const $ = selector => document.querySelector(selector);
 
 const taskList = $('#taskList');
 const emptyState = $('#emptyState');
+const emptyText = $('#emptyText');
 const searchInput = $('#searchInput');
-const statusFilter = $('#statusFilter');
-const clearCompletedBtn = $('#clearCompletedBtn');
 const progressBar = $('#progressBar');
 const progressLabel = $('#progressLabel');
 const progressPercent = $('#progressPercent');
-const totalCount = $('#totalCount');
-const completedCount = $('#completedCount');
-const pendingCount = $('#pendingCount');
+const totalCountEl = $('#totalCount');
+const completedCountEl = $('#completedCount');
+const pendingCountEl = $('#pendingCount');
+const clearCompletedBtn = $('#clearCompletedBtn');
+const modal = $('#modal');
+const taskForm = $('#taskForm');
+const taskTitle = $('#taskTitle');
+const taskDescription = $('#taskDescription');
+const titleError = $('#titleError');
+const titleCount = $('#titleCount');
+const descriptionCount = $('#descriptionCount');
+const saveTaskBtn = $('#saveTaskBtn');
 
-const icons = {
-    plus: '<path d="M12 5v14M5 12h14"/>',
-    leaf: '<path d="M11 20A7 7 0 0 1 4 13c0-6 8-9 16-9 0 8-3 16-9 16Z"/><path d="M8 16c2-3 5-5 9-7"/>',
-    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/>',
-    trash: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/>',
-    check: '<path d="m5 12 4 4L19 6"/>',
-    close: '<path d="m18 6-12 12M6 6l12 12"/>',
-    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>'
+const filterButtons = [...document.querySelectorAll('[data-filter]')];
+
+const PRIORITY_STYLES = {
+    High: {
+        label: 'Assembly',
+        badge: 'bg-rose-50 text-rose-700 border-rose-100/70',
+        dot: 'bg-rose-500'
+    },
+    Medium: {
+        label: 'Detailing',
+        badge: 'bg-amber-50 text-amber-700 border-amber-100/70',
+        dot: 'bg-amber-500'
+    },
+    Low: {
+        label: 'Sourcing',
+        badge: 'bg-emerald-50 text-emerald-700 border-emerald-100/70',
+        dot: 'bg-emerald-500'
+    }
 };
 
-function icon(name, size = 20) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || ''}</svg>`;
-}
-
-function addIcon(containerId, name, size = 20) {
-    const container = document.getElementById(containerId);
-
-    if (container) {
-        container.innerHTML = icon(name, size);
-    }
-}
-
-addIcon('headerLogoContainer', 'leaf', 24);
-addIcon('helpIconContainer', 'search', 18);
-addIcon('addBtnIconContainer', 'plus', 18);
+const PRIORITY_SORT_ORDER = {
+    High: 3,
+    Medium: 2,
+    Low: 1
+};
 
 function loadTasks() {
     try {
@@ -48,66 +56,35 @@ function loadTasks() {
 
             if (Array.isArray(parsedTasks)) {
                 return parsedTasks
-                    .filter(task => task && typeof task === 'object')
+                    .filter(task => task && typeof task === 'object' && task.title)
                     .map(task => ({
-                        id: task.id ?? Date.now() + Math.random(),
-                        title: String(task.title ?? ''),
+                        ...task,
+                        id: task.id ?? `${Date.now()}-${Math.random()}`,
+                        title: String(task.title),
                         description: String(task.description ?? ''),
-                        priority: ['low', 'medium', 'high'].includes(task.priority)
-                            ? task.priority
-                            : 'medium',
-                        completed: Boolean(task.completed),
-                        createdAt: task.createdAt || new Date().toISOString()
-                    }))
-                    .filter(task => task.title.trim() !== '');
+                        priority: PRIORITY_STYLES[task.priority] ? task.priority : 'Medium',
+                        completed: Boolean(task.completed)
+                    }));
             }
         }
     } catch (error) {
-        console.error('Could not load saved craft steps:', error);
+        console.error('Unable to load saved tasks:', error);
     }
 
-    return [
-        {
-            id: 1,
-            title: 'Choose a craft project',
-            description: 'Decide what you want to create.',
-            priority: 'high',
-            completed: false,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: 2,
-            title: 'Gather materials',
-            description: 'Prepare the materials needed for your project.',
-            priority: 'medium',
-            completed: false,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: 3,
-            title: 'Organize your workspace',
-            description: 'Keep your tools and materials organized.',
-            priority: 'low',
-            completed: true,
-            createdAt: new Date().toISOString()
-        }
-    ];
+    return [];
 }
 
 let tasks = loadTasks();
 let currentFilter = 'all';
+let searchQuery = '';
 let editingTaskId = null;
-
-if (!localStorage.getItem('craftflow_tasks')) {
-    saveTasks();
-}
 
 function saveTasks() {
     try {
         localStorage.setItem('craftflow_tasks', JSON.stringify(tasks));
     } catch (error) {
-        console.error('Could not save craft steps:', error);
-        showMessage('Your changes could not be saved in this browser.', 'error');
+        console.error('Unable to save tasks:', error);
+        showMessage('Unable to save changes in this browser.', true);
     }
 }
 
@@ -121,136 +98,291 @@ function escapeHTML(value) {
     })[character]);
 }
 
-function showMessage(message, type = 'success') {
+function showMessage(message, isError = false) {
     let toast = $('#craftflowToast');
 
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'craftflowToast';
-        toast.className = 'fixed bottom-5 right-5 z-[100] max-w-sm rounded-xl px-5 py-3 text-sm font-medium text-white shadow-lg';
         toast.setAttribute('role', 'status');
+        toast.className = 'fixed bottom-5 right-5 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg';
         document.body.appendChild(toast);
     }
 
-    toast.className = `fixed bottom-5 right-5 z-[100] max-w-sm rounded-xl px-5 py-3 text-sm font-medium text-white shadow-lg ${
-        type === 'error' ? 'bg-red-600' : 'bg-green-700'
+    toast.textContent = message;
+    toast.className = `fixed bottom-5 right-5 z-[100] rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg ${
+        isError ? 'bg-rose-600' : 'bg-emerald-700'
     }`;
 
-    toast.textContent = message;
-    toast.hidden = false;
+    clearTimeout(toast.hideTimeout);
 
-    if (toast._hideTimeout) {
-        clearTimeout(toast._hideTimeout);
-    }
-
-    toast._hideTimeout = setTimeout(() => {
-        toast.hidden = true;
+    toast.hideTimeout = setTimeout(() => {
+        toast.remove();
     }, 3000);
 }
 
-function createCraftForm() {
-    if ($('#craftflowModal')) return;
+function getFilteredAndSortedTasks() {
+    let matchedTasks = [...tasks];
 
-    const modal = document.createElement('div');
-    modal.id = 'craftflowModal';
-    modal.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4';
-    modal.innerHTML = `
-        <section class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="craftflowFormTitle">
-            <div class="mb-5 flex items-center justify-between gap-4">
-                <h2 id="craftflowFormTitle" class="text-2xl font-bold text-slate-800">Add craft step</h2>
-                <button id="closeCraftForm" type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-green-600" aria-label="Close form">
-                    ${icon('close')}
-                </button>
-            </div>
+    if (currentFilter === 'active') {
+        matchedTasks = matchedTasks.filter(task => !task.completed);
+    }
 
-            <form id="craftflowForm" class="space-y-4">
-                <div>
-                    <label for="taskTitle" class="mb-1 block text-sm font-semibold text-slate-700">Craft step title</label>
-                    <input id="taskTitle" name="title" type="text" maxlength="80" required placeholder="What do you need to do?" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100">
-                    <div class="mt-1 flex items-center justify-between gap-3">
-                        <p id="titleError" class="hidden text-sm text-red-600">Please enter a title.</p>
-                        <p id="titleCount" class="ml-auto text-xs text-slate-500">0/80</p>
-                    </div>
-                </div>
+    if (currentFilter === 'completed') {
+        matchedTasks = matchedTasks.filter(task => task.completed);
+    }
 
-                <div>
-                    <label for="taskDescription" class="mb-1 block text-sm font-semibold text-slate-700">Description</label>
-                    <textarea id="taskDescription" name="description" rows="3" maxlength="250" placeholder="Add a few details (optional)" class="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-slate-800 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"></textarea>
-                    <p id="descriptionCount" class="mt-1 text-right text-xs text-slate-500">0/250</p>
-                </div>
+    const cleanQuery = searchQuery.trim().toLowerCase();
 
-                <div>
-                    <label for="taskPriority" class="mb-1 block text-sm font-semibold text-slate-700">Priority</label>
-                    <select id="taskPriority" name="priority" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100">
-                        <option value="low">Low priority</option>
-                        <option value="medium" selected>Medium priority</option>
-                        <option value="high">High priority</option>
-                    </select>
-                </div>
+    if (cleanQuery) {
+        matchedTasks = matchedTasks.filter(task =>
+            task.title.toLowerCase().includes(cleanQuery) ||
+            task.description.toLowerCase().includes(cleanQuery)
+        );
+    }
 
-                <div class="flex justify-end gap-3 pt-2">
-                    <button id="cancelCraftForm" type="button" class="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400">Cancel</button>
-                    <button id="saveCraftStep" type="submit" class="rounded-xl bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500">Add step</button>
-                </div>
-            </form>
-        </section>
-    `;
-
-    document.body.appendChild(modal);
-
-    $('#closeCraftForm').addEventListener('click', closeCraftForm);
-    $('#cancelCraftForm').addEventListener('click', closeCraftForm);
-
-    modal.addEventListener('click', event => {
-        if (event.target === modal) {
-            closeCraftForm();
-        }
-    });
-
-    $('#taskTitle').addEventListener('input', () => {
-        $('#titleCount').textContent = `${$('#taskTitle').value.length}/80`;
-        $('#titleError').classList.add('hidden');
-    });
-
-    $('#taskDescription').addEventListener('input', () => {
-        $('#descriptionCount').textContent = `${$('#taskDescription').value.length}/250`;
-    });
-
-    $('#craftflowForm').addEventListener('submit', handleFormSubmit);
+    return matchedTasks.sort(
+        (a, b) =>
+            (PRIORITY_SORT_ORDER[b.priority] || 0) -
+            (PRIORITY_SORT_ORDER[a.priority] || 0)
+    );
 }
 
-function openCraftForm(task = null) {
-    createCraftForm();
+function buildCraftCardNode(task) {
+    const card = document.createElement('article');
+    const style = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.Medium;
+
+    card.className = `rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${
+        task.completed
+            ? 'border-emerald-200 bg-emerald-50/50'
+            : 'border-slate-200 bg-white'
+    }`;
+
+    card.innerHTML = `
+        <div class="flex items-start gap-3">
+            <button
+                type="button"
+                data-action="toggle"
+                data-id="${escapeHTML(task.id)}"
+                class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                    task.completed
+                        ? 'border-emerald-600 bg-emerald-600 text-white'
+                        : 'border-slate-300 text-transparent hover:border-emerald-600'
+                }"
+                aria-label="${task.completed ? 'Mark as active' : 'Mark as completed'}"
+            >
+                ${task.completed ? '✓' : ''}
+            </button>
+
+            <div class="min-w-0 flex-1">
+                <div class="mb-2 flex flex-wrap items-center gap-2">
+                    <span class="h-2.5 w-2.5 rounded-full ${style.dot}"></span>
+
+                    <h3 class="break-words text-base font-bold ${
+                        task.completed
+                            ? 'text-slate-500 line-through'
+                            : 'text-slate-900'
+                    }">
+                        ${escapeHTML(task.title)}
+                    </h3>
+                </div>
+
+                <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${style.badge}">
+                    ${style.label}
+                </span>
+
+                ${
+                    task.description
+                        ? `<p class="mt-3 break-words text-sm leading-6 text-slate-600">${escapeHTML(task.description)}</p>`
+                        : ''
+                }
+
+                <p class="mt-3 text-xs font-medium ${
+                    task.completed ? 'text-emerald-700' : 'text-slate-400'
+                }">
+                    ${task.completed ? 'Completed' : 'In progress'}
+                </p>
+            </div>
+
+            <div class="flex shrink-0 items-center gap-1">
+                 <button
+        type="button"
+        data-action="edit"
+        data-id="${escapeHTML(task.id)}"
+        class="rounded-lg p-2 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 transition"
+        aria-label="Edit task"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-5 w-5"
+            aria-hidden="true"
+        >
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+        </svg>
+    </button>
+
+              <button
+    type="button"
+    data-action="delete"
+    data-id="${escapeHTML(task.id)}"
+    class="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
+    aria-label="Delete task"
+>
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-5 w-5"
+        aria-hidden="true"
+    >
+        <path d="M3 6h18" />
+        <path d="M8 6V4h8v2" />
+        <path d="m19 6-1 14H6L5 6" />
+        <path d="M10 11v5" />
+        <path d="M14 11v5" />
+    </svg>
+</button>
+            </div>
+        </div>
+    `;
+
+    return card;
+}
+
+function render() {
+    if (!taskList) return;
+
+    taskList.innerHTML = '';
+
+    const total = tasks.length;
+    const completed = tasks.filter(task => task.completed).length;
+    const pending = total - completed;
+    const percentage = total > 0
+        ? Math.round((completed / total) * 100)
+        : 0;
+
+    if (totalCountEl) totalCountEl.textContent = String(total);
+    if (completedCountEl) completedCountEl.textContent = String(completed);
+    if (pendingCountEl) pendingCountEl.textContent = String(pending);
+    if (progressPercent) progressPercent.textContent = `${percentage}%`;
+
+    if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+        progressBar.setAttribute('aria-valuenow', String(percentage));
+    }
+
+    if (progressLabel) {
+        progressLabel.textContent = total > 0
+            ? `${pending} creative milestone${pending === 1 ? '' : 's'} remaining`
+            : 'Studio log empty';
+    }
+
+    filterButtons.forEach(button => {
+        const selected = button.dataset.filter === currentFilter;
+
+        button.className = selected
+            ? 'rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-2xs border border-slate-200/50 cursor-pointer'
+            : 'rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition cursor-pointer';
+
+        button.setAttribute('aria-pressed', String(selected));
+    });
+
+    const visibleTasks = getFilteredAndSortedTasks();
+
+    if (clearCompletedBtn) {
+        clearCompletedBtn.disabled = completed === 0;
+        clearCompletedBtn.classList.toggle('opacity-50', completed === 0);
+        clearCompletedBtn.classList.toggle('cursor-not-allowed', completed === 0);
+    }
+
+    if (visibleTasks.length === 0) {
+        if (emptyState) {
+            emptyState.classList.remove('hidden');
+            emptyState.classList.add('flex');
+        }
+
+        if (emptyText) {
+            emptyText.textContent = searchQuery.trim()
+                ? 'No tasks match your search.'
+                : `No tasks match the "${currentFilter}" filter.`;
+        }
+
+        return;
+    }
+
+    if (emptyState) {
+        emptyState.classList.add('hidden');
+        emptyState.classList.remove('flex');
+    }
+
+    visibleTasks.forEach(task => {
+        taskList.appendChild(buildCraftCardNode(task));
+    });
+}
+
+function openModal(task = null) {
+    if (!modal || !taskForm) {
+        showMessage('The task form was not found in index.html.', true);
+        return;
+    }
 
     editingTaskId = task ? task.id : null;
 
-    const modal = $('#craftflowModal');
-    const title = $('#craftflowFormTitle');
-    const titleInput = $('#taskTitle');
-    const descriptionInput = $('#taskDescription');
-    const priorityInput = $('#taskPriority');
-    const saveButton = $('#saveCraftStep');
+    taskForm.reset();
 
-    title.textContent = task ? 'Edit craft step' : 'Add craft step';
-    saveButton.textContent = task ? 'Save changes' : 'Add step';
+    if (task) {
+        taskTitle.value = task.title;
+        taskDescription.value = task.description;
 
-    titleInput.value = task ? task.title : '';
-    descriptionInput.value = task ? task.description : '';
-    priorityInput.value = task ? task.priority : 'medium';
+        const selectedPriority = taskForm.querySelector(
+            `input[name="priority"][value="${task.priority}"]`
+        );
 
-    $('#titleCount').textContent = `${titleInput.value.length}/80`;
-    $('#descriptionCount').textContent = `${descriptionInput.value.length}/250`;
-    $('#titleError').classList.add('hidden');
+        if (selectedPriority) {
+            selectedPriority.checked = true;
+        }
+    } else {
+        const defaultPriority = taskForm.querySelector(
+            'input[name="priority"][value="Medium"]'
+        );
+
+        if (defaultPriority) {
+            defaultPriority.checked = true;
+        }
+    }
+
+    const modalTitle = $('#modalTitle');
+
+    if (modalTitle) {
+        modalTitle.textContent = task ? 'Edit Blueprint Step' : 'Add Blueprint Step';
+    }
+
+    if (saveTaskBtn) {
+        saveTaskBtn.textContent = task ? 'Save Changes' : 'Commit Step';
+    }
+
+    if (titleError) titleError.classList.add('hidden');
+
+    updateCharacterCounts();
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 
-    titleInput.focus();
+    taskTitle.focus();
 }
 
-function closeCraftForm() {
-    const modal = $('#craftflowModal');
-
+function closeModal() {
     if (!modal) return;
 
     modal.classList.add('hidden');
@@ -258,170 +390,91 @@ function closeCraftForm() {
     editingTaskId = null;
 }
 
-function handleFormSubmit(event) {
+function updateCharacterCounts() {
+    if (titleCount && taskTitle) {
+        titleCount.textContent = `${taskTitle.value.length}/100`;
+    }
+
+    if (descriptionCount && taskDescription) {
+        descriptionCount.textContent = `${taskDescription.value.length}/250`;
+    }
+}
+
+function handleTaskSubmit(event) {
     event.preventDefault();
 
-    const titleInput = $('#taskTitle');
-    const descriptionInput = $('#taskDescription');
-    const priorityInput = $('#taskPriority');
-    const title = titleInput.value.trim();
+    const title = taskTitle.value.trim();
+    const description = taskDescription.value.trim();
+    const selectedPriority = taskForm.querySelector(
+        'input[name="priority"]:checked'
+    );
 
     if (!title) {
-        $('#titleError').classList.remove('hidden');
-        titleInput.focus();
+        if (titleError) titleError.classList.remove('hidden');
+        taskTitle.focus();
         return;
     }
 
-    const description = descriptionInput.value.trim();
-    const priority = priorityInput.value;
-    const now = new Date().toISOString();
+    if (!selectedPriority) {
+        showMessage('Please select a production stage.', true);
+        return;
+    }
+
+    const priority = selectedPriority.value;
 
     if (editingTaskId !== null) {
-        tasks = tasks.map(task => task.id === editingTaskId
-            ? { ...task, title, description, priority }
-            : task
+        tasks = tasks.map(task =>
+            String(task.id) === String(editingTaskId)
+                ? { ...task, title, description, priority }
+                : task
         );
 
-        showMessage('Craft step updated successfully.');
+        showMessage('Craft step updated.');
     } else {
-        tasks.unshift({
-            id: Date.now(),
+        tasks.push({
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
             title,
             description,
             priority,
             completed: false,
-            createdAt: now
+            createdAt: new Date().toISOString()
         });
 
-        showMessage('Craft step added successfully.');
+        showMessage('Craft step added.');
     }
 
     saveTasks();
-    renderTasks();
-    closeCraftForm();
+    render();
+    closeModal();
 }
 
-function getVisibleTasks() {
-    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+if (taskForm) {
+    taskForm.addEventListener('submit', handleTaskSubmit);
+}
 
-    return tasks.filter(task => {
-        const matchesFilter =
-            currentFilter === 'all' ||
-            (currentFilter === 'active' && !task.completed) ||
-            (currentFilter === 'completed' && task.completed);
+if (taskTitle) {
+    taskTitle.addEventListener('input', () => {
+        updateCharacterCounts();
 
-        const matchesSearch =
-            task.title.toLowerCase().includes(searchTerm) ||
-            task.description.toLowerCase().includes(searchTerm);
-
-        return matchesFilter && matchesSearch;
+        if (titleError && taskTitle.value.trim()) {
+            titleError.classList.add('hidden');
+        }
     });
 }
 
-function renderTasks() {
-    if (!taskList) return;
-
-    const visibleTasks = getVisibleTasks();
-
-    taskList.innerHTML = '';
-
-    if (visibleTasks.length === 0) {
-        if (emptyState) {
-            emptyState.classList.remove('hidden');
-            emptyState.classList.add('flex');
-        }
-    } else {
-        if (emptyState) {
-            emptyState.classList.add('hidden');
-            emptyState.classList.remove('flex');
-        }
-    }
-
-    visibleTasks.forEach(task => {
-        const card = document.createElement('article');
-
-        const priorityStyles = {
-            low: 'bg-blue-100 text-blue-700',
-            medium: 'bg-amber-100 text-amber-700',
-            high: 'bg-red-100 text-red-700'
-        };
-
-        const priorityClass = priorityStyles[task.priority] || priorityStyles.medium;
-
-        card.className = `rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${
-            task.completed ? 'border-green-200 bg-green-50/50' : 'border-slate-200 bg-white'
-        }`;
-
-        card.innerHTML = `
-            <div class="flex items-start gap-3">
-                <button type="button" data-action="toggle" data-id="${escapeHTML(task.id)}" class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                    task.completed
-                        ? 'border-green-600 bg-green-600 text-white'
-                        : 'border-slate-300 text-transparent hover:border-green-600'
-                }" aria-label="${task.completed ? 'Mark as incomplete' : 'Mark as completed'}">
-                    ${icon('check', 15)}
-                </button>
-
-                <div class="min-w-0 flex-1">
-                    <div class="mb-2 flex flex-wrap items-center gap-2">
-                        <h3 class="break-words text-lg font-bold ${
-                            task.completed ? 'text-slate-500 line-through' : 'text-slate-800'
-                        }">${escapeHTML(task.title)}</h3>
-                        <span class="rounded-full px-2.5 py-1 text-xs font-semibold ${priorityClass}">
-                            ${escapeHTML(task.priority)} priority
-                        </span>
-                    </div>
-
-                    ${
-                        task.description
-                            ? `<p class="break-words text-sm leading-6 text-slate-600">${escapeHTML(task.description)}</p>`
-                            : ''
-                    }
-
-                    <p class="mt-3 text-xs font-medium ${
-                        task.completed ? 'text-green-700' : 'text-slate-400'
-                    }">${task.completed ? 'Completed' : 'In progress'}</p>
-                </div>
-
-                <div class="flex shrink-0 items-center gap-1">
-                    <button type="button" data-action="edit" data-id="${escapeHTML(task.id)}" class="rounded-lg p-2 text-slate-500 hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" aria-label="Edit ${escapeHTML(task.title)}">
-                        ${icon('edit', 18)}
-                    </button>
-                    <button type="button" data-action="delete" data-id="${escapeHTML(task.id)}" class="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Delete ${escapeHTML(task.title)}">
-                        ${icon('trash', 18)}
-                    </button>
-                </div>
-            </div>
-        `;
-
-        taskList.appendChild(card);
-    });
-
-    updateDashboard();
+if (taskDescription) {
+    taskDescription.addEventListener('input', updateCharacterCounts);
 }
 
-function updateDashboard() {
-    const total = tasks.length;
-    const completed = tasks.filter(task => task.completed).length;
-    const pending = total - completed;
-    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+$('#closeModalBtn')?.addEventListener('click', closeModal);
+$('#cancelTaskBtn')?.addEventListener('click', closeModal);
+$('#headerAddBtn')?.addEventListener('click', () => openModal());
+$('#openAddBtn')?.addEventListener('click', () => openModal());
 
-    if (totalCount) totalCount.textContent = total;
-    if (completedCount) completedCount.textContent = completed;
-    if (pendingCount) pendingCount.textContent = pending;
-    if (progressPercent) progressPercent.textContent = `${percentage}%`;
-    if (progressLabel) progressLabel.textContent = `${completed} of ${total} steps completed`;
-
-    if (progressBar) {
-        progressBar.style.width = `${percentage}%`;
-        progressBar.setAttribute('aria-valuenow', percentage);
-    }
-
-    if (clearCompletedBtn) {
-        clearCompletedBtn.disabled = completed === 0;
-        clearCompletedBtn.classList.toggle('opacity-50', completed === 0);
-        clearCompletedBtn.classList.toggle('cursor-not-allowed', completed === 0);
-    }
+if (modal) {
+    modal.addEventListener('click', event => {
+        if (event.target === modal) closeModal();
+    });
 }
 
 if (taskList) {
@@ -430,77 +483,63 @@ if (taskList) {
 
         if (!button) return;
 
-        const taskId = button.dataset.id;
-        const task = tasks.find(item => String(item.id) === taskId);
+        const task = tasks.find(
+            item => String(item.id) === button.dataset.id
+        );
 
         if (!task) return;
 
         if (button.dataset.action === 'toggle') {
             task.completed = !task.completed;
             saveTasks();
-            renderTasks();
-            showMessage(task.completed ? 'Craft step completed!' : 'Craft step marked as in progress.');
+            render();
+            showMessage(task.completed ? 'Craft step completed.' : 'Craft step reopened.');
         }
 
         if (button.dataset.action === 'edit') {
-            openCraftForm(task);
+            openModal(task);
         }
 
         if (button.dataset.action === 'delete') {
-            const confirmed = window.confirm(`Delete "${task.title}"?`);
+            if (!window.confirm(`Delete "${task.title}"?`)) return;
 
-            if (!confirmed) return;
+            tasks = tasks.filter(
+                item => String(item.id) !== String(task.id)
+            );
 
-            tasks = tasks.filter(item => String(item.id) !== taskId);
             saveTasks();
-            renderTasks();
+            render();
             showMessage('Craft step deleted.');
         }
     });
 }
 
-$('#headerAddBtn')?.addEventListener('click', () => openCraftForm());
-$('#openAddBtn')?.addEventListener('click', () => openCraftForm());
-
 if (searchInput) {
-    searchInput.addEventListener('input', renderTasks);
-}
-
-if (statusFilter) {
-    statusFilter.addEventListener('click', event => {
-        const button = event.target.closest('[data-filter]');
-
-        if (!button) return;
-
-        currentFilter = button.dataset.filter;
-
-        statusFilter.querySelectorAll('[data-filter]').forEach(filterButton => {
-            const selected = filterButton === button;
-
-            filterButton.classList.toggle('bg-green-700', selected);
-            filterButton.classList.toggle('text-white', selected);
-            filterButton.classList.toggle('bg-slate-100', !selected);
-            filterButton.classList.toggle('text-slate-600', !selected);
-            filterButton.setAttribute('aria-pressed', String(selected));
-        });
-
-        renderTasks();
+    searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value;
+        render();
     });
 }
 
+filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        currentFilter = button.dataset.filter;
+        render();
+    });
+});
+
 if (clearCompletedBtn) {
     clearCompletedBtn.addEventListener('click', () => {
-        const completedTasks = tasks.filter(task => task.completed).length;
+        const completed = tasks.filter(task => task.completed).length;
 
-        if (completedTasks === 0) return;
+        if (completed === 0) return;
 
-        const confirmed = window.confirm('Clear all completed craft steps?');
-
-        if (!confirmed) return;
+        if (!window.confirm('Clear all completed craft steps?')) return;
 
         tasks = tasks.filter(task => !task.completed);
+
         saveTasks();
-        renderTasks();
+        render();
         showMessage('Completed craft steps cleared.');
     });
 }
@@ -508,38 +547,36 @@ if (clearCompletedBtn) {
 $('#helpBtn')?.addEventListener('click', () => {
     window.alert(
         'CraftFlow Help\n\n' +
-        '• Use "New Craft Step" to add a task.\n' +
-        '• Select the circle to mark a task complete.\n' +
-        '• Use the edit icon to update a task.\n' +
-        '• Use the delete icon to remove a task.\n' +
-        '• Search or use the filters to find tasks.\n' +
-        '• Your tasks are saved in this browser.'
+        '• Add a craft step using the New Craft Step button.\n' +
+        '• Choose a production stage.\n' +
+        '• Use the circle to complete a task.\n' +
+        '• Use the edit button to update a task.\n' +
+        '• Use the delete button to remove a task.\n' +
+        '• Search and filter your craft steps.\n' +
+        '• Tasks are saved in this browser.'
     );
 });
 
 document.addEventListener('keydown', event => {
-    const modal = $('#craftflowModal');
     const modalIsOpen = modal && !modal.classList.contains('hidden');
     const activeTag = document.activeElement?.tagName;
     const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag);
 
     if (event.key === 'Escape' && modalIsOpen) {
-        closeCraftForm();
+        closeModal();
     }
 
-   
-if (
-    event.key.toLowerCase() === 'n' &&
-    !event.ctrlKey &&
-    !event.metaKey &&
-    !event.altKey &&
-    !typing &&
-    !modalIsOpen
-) {
-    event.preventDefault();
-    openCraftForm();
-}
-
+    if (
+        event.key.toLowerCase() === 'n' &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !typing &&
+        !modalIsOpen
+    ) {
+        event.preventDefault();
+        openModal();
+    }
 });
 
-renderTasks();
+render();

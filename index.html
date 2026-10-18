@@ -120,5 +120,51 @@
       </div>
     </section>
   </main>
+
+
+    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="w-full max-w-md rounded-[24px] bg-white p-6 shadow-2xl border border-slate-100 animate-dialog-in">
+      <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+        <h3 id="modalTitle" class="font-display text-xl font-bold text-slate-900">Add Blueprint Step</h3>
+        <button id="closeModalBtn" aria-label="Close form panel" class="text-slate-400 hover:text-slate-600 transition cursor-pointer text-sm">✕</button>
+      </div>
+      <form id="taskForm" class="space-y-4" novalidate>
+        <div>
+          <label for="taskTitle" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Craft Goal Heading</label>
+          <input type="text" id="taskTitle" maxlength="100" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-emerald-600 bg-slate-50 focus:bg-white transition" placeholder="e.g., Apply clear poly-resin glaze coat" required />
+          <div class="flex justify-between mt-1.5 px-0.5">
+            <span id="titleError" class="text-xs text-rose-500 hidden font-medium">This description title cannot be left blank.</span>
+            <span id="titleCount" class="text-[11px] text-slate-400 ml-auto tabular-nums">0/100</span>
+          </div>
+        </div>
+        <div>
+          <label for="taskDescription" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Material Composition Logs</label>
+          <textarea id="taskDescription" maxlength="250" rows="3" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-emerald-600 bg-slate-50 focus:bg-white transition" placeholder="e.g., Mix components in a strict 2:1 ratio by volume. Let settle for 10 minutes before applying."></textarea>
+          <div class="flex justify-end mt-1.5 px-0.5">
+            <span id="descriptionCount" class="text-[11px] text-slate-400 tabular-nums">0/250</span>
+          </div>
+        </div>
+        <div>
+          <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">Production Pipeline Stage Badge</span>
+          <div class="flex flex-wrap gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer">
+              <input type="radio" name="priority" value="High" class="accent-emerald-600 size-3.5 cursor-pointer" /> Assembly
+            </label>
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer">
+              <input type="radio" name="priority" value="Medium" class="accent-emerald-600 size-3.5 cursor-pointer" checked /> Detailing
+            </label>
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider cursor-pointer">
+              <input type="radio" name="priority" value="Low" class="accent-emerald-600 size-3.5 cursor-pointer" /> Sourcing
+            </label>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 mt-5">
+          <button type="button" id="cancelTaskBtn" class="rounded-xl px-4 h-11 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer">Cancel</button>
+          <button type="submit" id="saveTaskBtn" class="rounded-xl bg-emerald-700 px-5 h-11 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800 transition cursor-pointer">Commit Step</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>
