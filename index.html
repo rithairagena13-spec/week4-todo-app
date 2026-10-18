@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./src/style.css">
   <link rel="preconnect" href="https://googleapis.com" />
   <link rel="preconnect" href="https://gstatic.com" crossorigin />
   <link href="https://googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Geist:wght@400..700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/src/style.css">
- <title>CraftFlow</title>
+  <title>CraftFlow</title>
+  <script src="./index.js" defer></script>
 </head>
-<body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased selection:bg-rose-100">
+<body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased selection:bg-emerald-100">
 
-   <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+  <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
       <div class="flex items-center gap-3">
-        <span class="grid size-9 place-items-center rounded-[10px] bg-rose-600 text-white shadow-sm shadow-rose-600/40" aria-hidden="true">
+        <span class="grid size-9 place-items-center rounded-[10px] bg-emerald-600 text-white shadow-sm shadow-emerald-600/40" aria-hidden="true">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 9-5 9-10S17.523 2 12 2 3 7 3 12s3.477 10 9 10z"/><path d="M12 6v12"/><path d="M6 12h12"/></svg>
         </span>
         <div>
@@ -28,48 +28,75 @@
           <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
           <span class="hidden sm:inline">How it works</span>
         </button>
-        <button id="headerAddBtn" class="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-rose-600 px-4 text-sm font-semibold text-white shadow-sm shadow-rose-700/50 transition hover:bg-rose-700 active:translate-y-px">
+        <button id="headerAddBtn" class="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm shadow-emerald-700/50 transition hover:bg-emerald-700 active:translate-y-px">
           <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           New Craft Step
-          <kbd class="hidden h-5 min-w-5 place-items-center rounded-md border border-white/30 bg-white/10 px-1 font-sans text-[11px] font-semibold leading-none text-rose-100 sm:inline-grid">N</kbd>
+          <kbd class="hidden h-5 min-w-5 place-items-center rounded-md border border-white/30 bg-white/10 px-1 font-sans text-[11px] font-semibold leading-none text-emerald-100 sm:inline-grid">N</kbd>
         </button>
       </div>
     </div>
   </header>
 
-    <main class="mx-auto max-w-6xl space-y-10 px-5 py-8 md:py-10">
+  <main class="mx-auto max-w-6xl space-y-10 px-5 py-8 md:py-10">
 
-    <section class="relative isolate overflow-hidden rounded-[28px] bg-rose-600 bg-[linear-gradient(to_right,rgb(255_255_255/0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.07)_1px,transparent_1px)] bg-size-[28px_28px] p-6 text-white md:p-10">
+    <section class="relative isolate overflow-hidden rounded-[28px] bg-emerald-600 bg-[linear-gradient(to_right,rgb(255_255_255/0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.07)_1px,transparent_1px)] bg-size-[28px_28px] p-6 text-white md:p-10">
       <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-radial-[120%_90%_at_100%_0%] from-white/15 to-transparent to-55%"></div>
       <div class="grid items-center gap-8 md:grid-cols-[1.15fr_1fr] md:gap-12">
         <div>
           <h2 class="font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl">Shape your creative visions.</h2>
-          <p class="mt-4 max-w-md text-base leading-7 text-rose-100">Organize active woodcraft tasks, track fine ceramic glazes, coordinate textile patterns, and measure your design completion vectors in real time.</p>
+          <p class="mt-4 max-w-md text-base leading-7 text-emerald-100">Organize active woodcraft tasks, track fine ceramic glazes, coordinate textile patterns, and measure your design completion vectors in real time.</p>
           <div class="mt-7 flex flex-wrap items-center gap-4">
-            <button id="openAddBtn" class="inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-5 text-[15px] font-semibold text-rose-700 shadow-lg shadow-slate-900/20 transition hover:bg-rose-50 active:translate-y-px">
+            <button id="openAddBtn" class="inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-5 text-[15px] font-semibold text-emerald-700 shadow-lg shadow-slate-900/20 transition hover:bg-emerald-50 active:translate-y-px">
               <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
               Add a craft step
             </button>
-            <span class="hidden text-sm text-rose-200 sm:inline">or press <kbd class="inline-grid h-5 min-w-5 place-items-center rounded-md border border-white/30 bg-white/10 px-1 font-sans text-[11px] font-semibold leading-none text-rose-100">N</kbd></span>
+            <span class="hidden text-sm text-emerald-200 sm:inline">or press <kbd class="inline-grid h-5 min-w-5 place-items-center rounded-md border border-white/30 bg-white/10 px-1 font-sans text-[11px] font-semibold leading-none text-emerald-100">N</kbd></span>
           </div>
         </div>
 
         <div role="region" aria-label="Studio construction metrics" class="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm md:p-6">
           <div class="flex items-end justify-between gap-4">
-            <p id="progressLabel" class="text-sm font-medium text-rose-100">No project milestones tracked</p>
+            <p id="progressLabel" class="text-sm font-medium text-emerald-100">No project milestones tracked</p>
             <p id="progressPercent" class="font-display text-4xl font-bold leading-none tabular-nums">0%</p>
           </div>
           <div class="relative mt-5 flex h-2.5 bg-white/20 rounded-full overflow-hidden" role="progressbar" aria-label="Production stages cleared" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div id="progressBar" class="h-full bg-white transition-all duration-500 w-0"></div>
           </div>
           <dl class="mt-6 grid grid-cols-3 divide-x divide-white/15 border-t border-white/15 pt-5">
-            <div class="pr-3"><dt class="text-xs font-medium text-rose-200">Total Steps</dt><dd id="totalCount" class="mt-1 font-display text-2xl font-bold tabular-nums">0</dd></div>
-            <div class="px-4"><dt class="text-xs font-medium text-rose-200">Completed</dt><dd id="completedCount" class="mt-1 font-display text-2xl font-bold tabular-nums">0</dd></div>
-            <div class="pl-4"><dt class="text-xs font-medium text-rose-200">Pending</dt><dd id="pendingCount" class="mt-1 font-display text-2xl font-bold tabular-nums">0</dd></div>
+            <div class="pr-3"><dt class="text-xs font-medium text-emerald-200">Total Steps</dt><dd id="totalCount" class="mt-1 font-display text-2xl font-bold tabular-nums">0</dd></div>
+            <div class="px-4"><dt class="text-xs font-medium text-emerald-200">Completed</dt><dd id="completedCount" class="mt-1 font-display text-2xl font-bold tabular-nums">0</dd></div>
+            <div class="pl-4"><dt class="text-xs font-medium text-emerald-200">Pending</dt><dd id="pendingCount" class="mt-1 font-display text-2xl font-bold tabular-nums">0</dd></div>
           </dl>
         </div>
       </div>
     </section>
 
+    <section class="space-y-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div id="statusFilter" class="inline-flex rounded-xl bg-slate-200/60 p-1 border border-slate-200" role="group" aria-label="Filter tasks by stage block">
+          <button data-filter="all" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition cursor-pointer">All Steps</button>
+          <button data-filter="active" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition cursor-pointer">In Production</button>
+          <button data-filter="completed" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition cursor-pointer">Assembled</button>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="relative w-full sm:w-64">
+            <input type="text" id="searchInput" placeholder="Search craft logs..." class="h-10 w-full rounded-xl border border-slate-200 bg-white pl-4 pr-10 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-xs" />
+            <span class="absolute right-3.5 top-2.5 text-slate-400 pointer-events-none select-none text-xs">🔍</span>
+          </div>
+          <button id="clearCompletedBtn" class="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-xs transition enabled:hover:border-slate-300 enabled:hover:bg-slate-50 enabled:active:translate-y-px disabled:cursor-not-allowed disabled:opacity-45">
+            Flush Completed
+          </button>
+        </div>
+      </div>
+
+      <div id="taskList" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+      <div id="emptyState" class="hidden flex-col items-center justify-center text-center p-12 bg-white border border-dashed border-slate-200 rounded-[24px] max-w-sm mx-auto shadow-xs">
+        <span class="grid size-12 place-items-center rounded-xl bg-emerald-50 text-emerald-500 mb-4 text-xl">🎨</span>
+        <h3 id="emptyTitle" class="text-base font-bold text-slate-900">Workspace blueprint clear</h3>
+        <p id="emptyText" class="text-xs text-slate-400 mt-1 max-w-xs">No active craft parameters match your targeted filtering query rules.</p>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
