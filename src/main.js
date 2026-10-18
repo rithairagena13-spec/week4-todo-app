@@ -592,3 +592,84 @@ document.addEventListener('keydown', event => {
 });
 
 render();
+
+
+function handleFormSubmission(e) {
+  e.preventDefault();
+  const cleanTitle = taskTitle.value.trim();
+  if (!cleanTitle) {
+    setTitleError(true);
+    return;
+  }
+  const targetedPriority = document.querySelector('input[name="priority"]:checked').value;
+  if (editingId) {
+    const activeTaskElement = tasks.find(t => t.id === editingId);
+    if (activeTaskElement) {
+      activeTaskElement.title = cleanTitle;
+      activeTaskElement.description = taskDescription.value.trim();
+      activeTaskElement.priority = targetedPriority;
+      showToast("Workshop log entry modified successfully.");
+    }
+  } else {
+    tasks.push({
+      id: Date.now(),
+      title: cleanTitle,
+      description: taskDescription.value.trim(),
+      priority: targetedPriority,
+      completed: false
+    });
+    showToast("Fresh design step recorded into slate grid workspace!");
+  }
+  closeModal();
+  dataSyncAndRender();
+}
+
+function setupApplicationCoreEvents() {
+  taskForm.addEventListener('submit', handleFormSubmission);
+  taskTitle.addEventListener('input', () => {
+    updateCounter(taskTitle, titleCount);
+    if (taskTitle.value.trim().length > 0) setTitleError(false);
+  });
+  taskDescription.addEventListener('input', () => updateCounter(taskDescription, descriptionCount));
+
+  openAddBtn.addEventListener('click', () => openModal());
+  document.getElementById('headerAddBtn').addEventListener('click', () => openModal());
+  document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+  document.getElementById('cancelTaskBtn').addEventListener('click', closeModal);
+  document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+    if (deletingId) {
+      tasks = tasks.filter(t => t.id !== deletingId);
+      showToast("Element purged cleanly from structural state array cache.", "danger");
+      closeDeleteModal();
+      dataSyncAndRender();
+    }
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    render();
+  });
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFilter = btn.dataset.filter;
+      dataSyncAndRender();
+    });
+  });
+
+  clearCompletedBtn.addEventListener('click', () => {
+    tasks = tasks.filter(t => !t.completed);
+    showToast("Completed assembled tasks flushed from tracking view arrays.", "info");
+    dataSyncAndRender();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'n' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      openModal();
+    }
+  });
+}
+
