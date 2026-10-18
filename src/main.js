@@ -171,7 +171,19 @@ function buildCraftCardNode(task) {
                 }"
                 aria-label="${task.completed ? 'Mark as active' : 'Mark as completed'}"
             >
-                ${task.completed ? '✓' : ''}
+               ${task.completed ? `
+    <svg xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="3"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         class="h-4 w-4"
+         aria-hidden="true">
+        <path d="m5 12 4 4L19 6" />
+    </svg>
+` : ''}
             </button>
 
             <div class="min-w-0 flex-1">
