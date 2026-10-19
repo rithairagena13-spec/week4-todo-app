@@ -6,7 +6,7 @@ Developed by Derrick Mugisha for Advanced Frontend Web Development.
 
 ## Live Application Links
 - Deployed Live Site: https://week4-todo-app-q086.onrender.com
-- Video Demonstration: []
+- Video Demonstration: [https://www.loom.com/share/04e6682612b9486c9a31edd36b67fd80]
 
 ## Implemented Core Features
 - Core Creation Input: Create artisan steps seamlessly using mouse selections or hotkey inputs.
